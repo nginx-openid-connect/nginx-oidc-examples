@@ -39,7 +39,13 @@ This is to provide how to set up IdP, NGINX Plus and locally test OIDC flow in y
 - Clone the [nginxinc/nginx-openid-connect](https://github.com/nginxinc/nginx-openid-connect) GitHub repository, or download the repo files.
 
   ```bash
-  git clone https://github.com/nginxinc/nginx-openid-connect.git
+  git clone https://github.com/nginx-openid-connect/nginx-oidc-examples.git
+  ```
+
+- Change the working directory.
+
+  ```bash
+  cd nginx-oidc-examples/001-oidc-local-test
   ```
 
 ## 2. Running a Docker Container
