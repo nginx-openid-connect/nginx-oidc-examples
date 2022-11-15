@@ -2,7 +2,7 @@
 
 This is to provide how to set up IdP, NGINX Plus and locally test OIDC flow in your machine before implementing your frontend and backend application.
 
-> Note: The main [`README.md`](../README.md) of this repo explains several options in detail. But it focuses on `Getting Started` to quickly set up and test the OIDC flow locally using bundled frontend app and backend environment.
+> Note: The main [`README.md`](https://github.com/nginxinc/nginx-openid-connect) of this repo explains several options in detail. But it focuses on `Getting Started` to quickly set up and test the OIDC flow locally using bundled frontend app and backend environment.
 
 ![](./img/nginx-oidc-workflow.png)
 
