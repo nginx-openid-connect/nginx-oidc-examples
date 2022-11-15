@@ -36,7 +36,7 @@ This is to provide how to set up IdP, NGINX Plus and locally test OIDC flow in y
   nginx-repo.key
   ```
 
-- Clone the [nginxinc/nginx-openid-connect](https://github.com/nginxinc/nginx-openid-connect) GitHub repository, or download the repo files.
+- Clone the [nginx-openid-connect/nginx-oidc-examples](https://github.com/nginx-openid-connect/nginx-oidc-examples.git) GitHub repository, or download the repo files.
 
   ```bash
   git clone https://github.com/nginx-openid-connect/nginx-oidc-examples.git
