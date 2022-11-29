@@ -4,7 +4,7 @@ This repo provides collections of examples as the NGINX Plus OIDC Reference Impl
 
 ## Quick Start Guide
 
-- [Set Up Local Demo](./001-oidc-local-test/README.md) - set up a local demo that can be used for testing purposes
+- [Set Up Local Demo](./001-oidc-local-test/) - set up a local demo that can be used for testing purposes
 
 ## IdP Integration Examples
 
