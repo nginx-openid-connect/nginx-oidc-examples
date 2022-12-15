@@ -194,6 +194,7 @@ VOLUME /etc/nginx
 RUN    chmod -R 644 /etc/nginx
 RUN    chmod -R 644 /etc/nginx/conf.d
 RUN    chmod -R 644 /usr/share/nginx/html/css
+RUN    chmod -R 600 /var/lib/nginx/state/
 
 # COPY (Nginx configuration) directory
 COPY  docker/build-context/content/   /usr/share/nginx/html/

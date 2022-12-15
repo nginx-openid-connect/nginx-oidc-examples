@@ -10,7 +10,6 @@ export default {
     codeExchange,
     validateIdToken,
     logout,
-    v2logout,
     redirectPostLogin,
     redirectPostLogout
 };
@@ -112,7 +111,11 @@ function auth(r, afterSyncCheck) {
                         // ID Token is valid, update keyval
                         r.log("OIDC refresh success, updating id_token for " + r.variables.cookie_auth_token);
                         r.variables.session_jwt = tokenset.id_token; // Update key-value store
-                        r.variables.access_token = tokenset.access_token;
+                        if (tokenset.access_token) {
+                            r.variables.access_token = tokenset.access_token;
+                        } else {
+                            r.variables.access_token = "-";
+                        }
 
                         // Update refresh token (if we got a new one)
                         if (r.variables.refresh_token != tokenset.refresh_token) {
@@ -196,7 +199,12 @@ function codeExchange(r) {
                         // Add opaque token to keyval session store
                         r.log("OIDC success, creating session " + r.variables.request_id);
                         r.variables.new_session = tokenset.id_token; // Create key-value store entry
-                        r.variables.new_access_token = tokenset.access_token;
+                        if (tokenset.access_token) {
+                            r.variables.new_access_token = tokenset.access_token;
+                        } else {
+                            r.variables.new_access_token = "-";
+                        }
+                        
                         r.headersOut["Set-Cookie"] = "auth_token=" + r.variables.request_id + "; " + r.variables.oidc_cookie_flags;
                         r.return(302, r.variables.redirect_base + r.variables.cookie_auth_redir);
                    }
@@ -263,12 +271,24 @@ function validateIdToken(r) {
     }
 }
 
+//
+// RP-Initiated or Custom Logout w/ Idp.
+// 
+// - An RP requests that the Idp log out the end-user by redirecting the
+//   end-user's User Agent to the Idp's Logout endpoint.
+// - https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
+// - https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RedirectionAfterLogout
+//
 function logout(r) {
     r.log("OIDC logout for " + r.variables.cookie_auth_token);
-    r.variables.session_jwt = "-";
-    r.variables.access_token = "-";
-    r.variables.refresh_token = "-";
-    r.return(302, r.variables.oidc_logout_redirect);
+    var idToken = r.variables.session_jwt;
+    var queryParams = getRPInitiatedLogoutArgs(r, idToken);
+
+    r.variables.request_id    = '-';
+    r.variables.session_jwt   = '-';
+    r.variables.access_token  = '-';
+    r.variables.refresh_token = '-';
+    r.return(302, r.variables.oidc_end_session_endpoint + queryParams);
 }
 
 function getAuthZArgs(r) {
@@ -309,48 +329,9 @@ function idpClientAuth(r) {
 
 //
 // Redirect URI after logging in the IDP.
+//
 function redirectPostLogin(r) {
-    r.return(302, r.variables.redirect_base + getIDTokenArgsAfterLogin(r));
-}
-
-//
-// Get query parameter of ID token after sucessful login:
-//
-// - For the variable of `returnTokenToClientOnLogin` of the APIM, this config
-//   is only effective for /login endpoint. By default, our implementation MUST
-//   not return any token back to the client app.
-// - If its configured it can send id_token in the request uri as 
-//   `?id_token=sdfsdfdsfs` after successful login. 
-//
-//
-function getIDTokenArgsAfterLogin(r) {
-    if (r.variables.return_token_to_client_on_login == 'id_token') {
-        return '?id_token=' + r.variables.id_token;
-    }
-    return '';
-}
-
-//
-// RP-Initiated or Custom Logout w/ Idp.
-// 
-// - An RP requests that the Idp log out the end-user by redirecting the
-//   end-user's User Agent to the Idp's Logout endpoint.
-// - TODO: Handle custom logout parameters if Idp doesn't support standard spec
-//         of 'OpenID Connect RP-Initiated Logout 1.0'.
-//
-// - https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
-// - https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RedirectionAfterLogout
-//
-function v2logout(r) {
-    r.log("OIDC logout for " + r.variables.cookie_auth_token);
-    var idToken = r.variables.session_jwt;
-    var queryParams = getRPInitiatedLogoutArgs(r, idToken);
-
-    r.variables.request_id    = '-';
-    r.variables.session_jwt   = '-';
-    r.variables.access_token  = '-';
-    r.variables.refresh_token = '-';
-    r.return(302, r.variables.oidc_end_session_endpoint + queryParams);
+    r.return(302, r.variables.redirect_base + r.variables.cookie_auth_redir);
 }
 
 //
