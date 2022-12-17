@@ -51,8 +51,7 @@ services:
       dockerfile: ./docker/docker-files/nginxplus-ubuntu18.04/Dockerfile
     image: nginxplus_oidc_keycloak_ubuntu18.04
     ports:
-      - 8010:8010 # Frontend/backend example v1: landing page w/ OIDC flow w/o login button
-      - 8020:8020 # Frontend/backend example v2: landing page w/ login button, login button w/ OIDC flow, logout button, /userinfo, access token based API authorization
+      - 8010:8010
     volumes:
       - type: bind
         source: ./

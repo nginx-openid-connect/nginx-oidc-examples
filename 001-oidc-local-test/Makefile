@@ -1,4 +1,7 @@
-.PHONY: start ps watch down stop clean
+.PHONY: build start ps watch down stop clean
+
+build:
+	docker-compose build --no-cache nginxplus_oidc_keycloak_ubuntu18.04
 
 start:
 	docker-compose up -d
