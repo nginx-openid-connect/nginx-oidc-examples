@@ -107,7 +107,7 @@ var doSignIn = function(evt) {
 
 // Sign in by clicking 'Sign In' button of the UI.
 var doSignOut = function(evt) {
-  doNginxEndpointRequest(evt, '/v2/logout');
+  doNginxEndpointRequest(evt, '/logout');
 };
 
 // Request an API with application/json type response.
@@ -125,7 +125,7 @@ var doAPIRequest = function(evt, uri, msgBefore, msgAfter, headers) {
   .then((response) => {
     showResponseStatus(response.status, response.statusText, url)
     showMessageDetail(MSG_EMPTY_JSON)
-    if (response.ok || response.status == 400) {
+    if (response.ok) {
       return response.json();
     }
     throw new Error(response.error)

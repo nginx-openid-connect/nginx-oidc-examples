@@ -69,15 +69,8 @@
         error_page 500 502 504 @oidc_error;
     }
 
-    #
-    # User information endpoint for the following purposes:
-    # - Browser to periodically check if your are signed-in based on status code.
-    # - Browser to show the signed-in user information.
-    # - https://openid.net/specs/openid-connect-core-1_0.html#UserInfo
-    #
     location = /userinfo {
-        internal;
-        # 
+        # This location is to show signed-in user information:
         # - https://openid.net/specs/openid-connect-core-1_0.html#UserInfo
         proxy_ssl_server_name on;             # For SNI to the IdP
         proxy_set_header Authorization "Bearer $access_token";
@@ -93,12 +86,22 @@
     }
 
     location = /_logout {
+        # This location is a RP's callback URI that is the default value of 
+        # $oidc_logout_redirect which is called by OP after successful logout.
+
         # Clean cookies
         add_header Set-Cookie "auth_token=; $oidc_cookie_flags"; # Send empty cookie
         add_header Set-Cookie "auth_redir=; $oidc_cookie_flags"; # Erase original cookie
         add_header Set-Cookie "auth_nonce=; $oidc_cookie_flags"; 
 
-        # Redirect to either the original page or custom logout page.
+        # Enable one of the following examples.
+
+        # Example 1. Built-in, simple logout page
+        #default_type text/plain;
+        #return 200 "Logged out\n";
+
+        # Example 2. Redirect to either the landing page or custom logout page
+        #            using the map of $post_logout_return_uri.
         js_content oidc.redirectPostLogout;
     }
 

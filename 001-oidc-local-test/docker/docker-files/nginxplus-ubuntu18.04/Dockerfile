@@ -184,6 +184,7 @@ RUN set -x \
 #COPY etc/ssl/my-nginx.example.com.key /etc/ssl/my-nginx.example.com.key
 
 RUN    mkdir -p /etc/nginx/conf.d                           \
+    && mkdir -p /etc/nginx/sample                           \
     && mkdir -p /usr/share/nginx/html/css                   \
     && mkdir -p /var/lib/nginx/state                        \
     && mkdir -p /etc/controller-agent/configurator/auxfiles
@@ -192,9 +193,16 @@ VOLUME /usr/share/nginx/html
 VOLUME /etc/nginx
 
 RUN    chmod -R 644 /etc/nginx
-RUN    chmod -R 644 /etc/nginx/conf.d
-RUN    chmod -R 644 /usr/share/nginx/html/css
-RUN    chmod -R 600 /var/lib/nginx/state/
+
+RUN    chown nginx:nginx  /etc/nginx/conf.d
+RUN    chmod -R 644       /etc/nginx/conf.d
+
+RUN    chown nginx:nginx  /etc/nginx/sample
+RUN    chmod -R 644       /etc/nginx/sample
+
+RUN    chmod -R 644       /usr/share/nginx/html/css
+RUN    chown nginx:nginx  /var/lib/nginx/state/
+RUN    chmod -R 666       /var/lib/nginx/state/
 
 # COPY (Nginx configuration) directory
 COPY  docker/build-context/content/   /usr/share/nginx/html/
