@@ -14,7 +14,8 @@ export default {
     validateIdToken,
     logout,
     redirectPostLogin,
-    redirectPostLogout
+    redirectPostLogout,
+    userInfo
 };
 
 function retryOriginalRequest(r) {
@@ -289,16 +290,16 @@ function logout(r) {
                       r.variables.redirect_base + 
                       r.variables.oidc_logout_redirect +
                       '&id_token_hint=' + idToken;
-    if (r.variables.oidc_end_session_query_params_option == REPLACE_PARAMS) {
-        queryParams = '?' + r.variables.oidc_end_session_query_params;
-    } else if (r.variables.oidc_end_session_query_params_option == EXTRA_PARAMS) {
-        queryParams += '&' + r.variables.oidc_end_session_query_params;
+    if (r.variables.oidc_logout_query_params_option == REPLACE_PARAMS) {
+        queryParams = '?' + r.variables.oidc_logout_query_params;
+    } else if (r.variables.oidc_logout_query_params_option == EXTRA_PARAMS) {
+        queryParams += '&' + r.variables.oidc_logout_query_params;
     } 
     r.variables.request_id    = '-';
     r.variables.session_jwt   = '-';
     r.variables.access_token  = '-';
     r.variables.refresh_token = '-';
-    r.return(302, r.variables.oidc_end_session_endpoint + queryParams);
+    r.return(302, r.variables.oidc_logout_endpoint + queryParams);
 }
 
 function getAuthZArgs(r) {
@@ -352,5 +353,46 @@ function redirectPostLogin(r) {
 // Redirect URI after logged-out from the OP.
 //
 function redirectPostLogout(r) {
-    r.return(302, r.variables.post_logout_return_uri);
+    if (r.variables.post_logout_return_uri) {
+        r.return(302, r.variables.post_logout_return_uri);
+    } else {
+        r.return(302, r.variables.redirect_base + r.variables.cookie_auth_redir);
+    }
+}
+
+//
+// Return necessary user info claims after receiving and extracting all claims
+// that are received from the OpenID Connect Provider(OP).
+//
+function userInfo(r) {
+    r.subrequest('/_userinfo',
+        function(res) {
+            if (res.status == 200) {
+                var error_log = "OIDC userinfo JSON failure";
+                var claimsOP = ''; // Claims that are received by the OP.
+                try {
+                    claimsOP = JSON.parse(res.responseBody);
+                } catch (e) {
+                    error_log += ": " + res.responseBody;
+                    r.error(error_log);
+                    r.return(500);
+                    return;
+                }
+                // The claimsRP is to extract claims that are configured in
+                // $oidc_userinfo_required_claims in the RP and send them to
+                // the client using the response of the OP.
+                var claimsRP = r.variables.oidc_userinfo_required_claims.split(",");
+                var ret = {};
+                for (var i in claimsRP) {
+                    if (claimsRP[i] in claimsOP) {
+                        ret[claimsRP[i]] = claimsOP[claimsRP[i]];
+                    }
+                }
+                r.variables.user_info = JSON.stringify(ret);
+                r.return(200, r.variables.user_info);
+            } else {
+                r.return(res.status)
+            }
+        }
+    );
 }
