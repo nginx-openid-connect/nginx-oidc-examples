@@ -23,7 +23,7 @@ This is to provide how to set up IdP, NGINX Plus and locally test OIDC flow in y
   ```bash
   $ sudo vi /etc/hosts or notepad.exe c:\Windows\System32\Drivers\etc\hosts
 
-  127.0.0.1 nginx.keycloak.test
+  127.0.0.1 www.example.com
   127.0.0.1 host.docker.internal
   ```
 
@@ -73,7 +73,7 @@ This is to provide how to set up IdP, NGINX Plus and locally test OIDC flow in y
 
 ## 3. Running a Browser and Checking If Bundle Page Works
 
-- Run a Web Browser with `http://nginx.oidc.test:8020/`, and check if the bundle frontend landing page is shown:
+- Run a Web Browser with `http://www.example.com:8010/`, and check if the bundle frontend landing page is shown:
 
   ![](./img/bundle-frontend-landing-page.png)
 
@@ -95,15 +95,15 @@ Choose one of your prefered IdPs, and set up your IdP by referencing the followi
 >   - **Client ID**: `my-client-id`
 >   - **Access Type**: `public` for PKCE
 >   - **Valid Redirected URIs**:
->     - `http://nginx.oidc.test:8020/_codexch`
->     - `http://nginx.oidc.test:8020/v2/_logout`
+>     - `http://www.example.com:8010/_codexch`
+>     - `http://www.example.com:8010/_logout`
 > - The above references will be eventually consolidated into the [NGINX Docs](https://docs.nginx.com/nginx/deployment-guides/single-sign-on/). So feel free to contribute the repo to make better examples for each IdP as references.
 
 ## 5. Configuring NGINX Plus
 
 Update the NGINX Plus configuration file if you want. Otherwise, skip the following steps for your quick test as the minimal config information is already provided in this repo.
 
-- In the `openid_connect_configuration.conf`, find and update `$oidc_authz_endpoint`, `$oidc_token_endpoint`, `$oidc_jwt_keyfile`, `$oidc_end_session_endpoint`, `$oidc_userinfo_endpoint`, `$oidc_client`, `$oidc_pkce_enable`, `$oidc_client_secret`, and `$oidc_scopes` upon your setup in IdP.
+- In the `openid_connect_configuration.conf`, find and update `$oidc_authz_endpoint`, `$oidc_token_endpoint`, `$oidc_jwt_keyfile`, `$oidc_logout_endpoint`, `$oidc_userinfo_endpoint`, `$oidc_client`, `$oidc_pkce_enable`, `$oidc_client_secret`, and `$oidc_scopes` upon your setup in IdP.
 
   ```nginx
     map $host $oidc_authz_endpoint {
@@ -118,7 +118,7 @@ Update the NGINX Plus configuration file if you want. Otherwise, skip the follow
         default "http://host.docker.internal:8080/auth/realms/master/protocol/openid-connect/certs";
     }
 
-    map $host $oidc_end_session_endpoint {
+    map $host $oidc_logout_endpoint {
         default "http://host.docker.internal:8080/auth/realms/master/protocol/openid-connect/logout";
     }
 
@@ -142,26 +142,30 @@ Update the NGINX Plus configuration file if you want. Otherwise, skip the follow
         default "openid+profile+email+offline_access";
     }
 
+    map $host $oidc_landing_page {
+        # Where to send browser after successful login. This option is only
+        # recommended for scenarios where a landing page shows default information
+        # without login, and the RP redirects to the landing page after successful
+        # login from the OP. If this is empty, then the RP redirects to $request_uri.
+        default "";
+        www.example.com $redirect_base;
+    }
+
     map $host $post_logout_return_uri {
-        # The following examples can be replaced with a custom logout page, or
-        # a complete URL to be redirected after successful logout from the IdP.
+        # Where to send browser after the RP requests /logout to the OP, and after
+        # the RP (/_logout) is called by the OP and cleans cookies. The following
+        # If this is empty, then the RP redirects to $request_uri.
 
-        # Example 1: Redirect to the original langding page.
-        #            ./docker/build-context/nginx/sample/proxy_server_frontend.conf
-        #              -> redirect to the '/' location block
-        #            ./docker/build-context/content/index.html
-        #
-        default $redirect_base;
+        default "";
 
-        # Example 2: Redirect to a custom logout page
-        #            ./docker/build-context/nginx/sample/proxy_server_frontend.conf
-        #              -> redirect to the '/signout' location block
-        #            ./docker/build-context/content/signout.html
-        #
-        # default $redirect_base/signout;
+        # Edit if you want to redirect to the landing page
+        www.example.com $oidc_landing_page;
 
-        # Example 3: Redirect to an another URL
-        # default https://www.nginx.com;
+        # Edit if you want to redirect to a custom logout page
+        #www.example.com $redirect_base/signout;
+
+        # Edit if you want to redirect to an another complete URL
+        #www.example.com https://www.nginx.com;
     }
   ```
 
@@ -197,12 +201,12 @@ Update the NGINX Plus configuration file if you want. Otherwise, skip the follow
   > - In the [`frontend.conf`](../frontend.conf), you can add additional API endpoints like:
   >
   >   ```nginx
-  >   location /v1/api/example {
+  >   location /v1/private-api {
   >       auth_jwt "" token=$access_token;      # Use $session_jwt for Azure AD
   >       auth_jwt_key_request /_jwks_uri;      # Enable when using URL
   >
   >       proxy_set_header Authorization "Bearer $access_token";
-  >       proxy_pass http://my_backend_app;
+  >       proxy_pass http://my_backend;
   >   }
   >   ```
   >
@@ -210,11 +214,17 @@ Update the NGINX Plus configuration file if you want. Otherwise, skip the follow
 
 - Click `Sign Out` button:
 
-  - Redirect to the original landing page if you configure `$post_logout_return_uri` with `$redirect_base` as the following example:
+  - Redirect to the original landing page if you configure `$post_logout_return_uri` with `$oidc_landing_page` as the following example:
 
     ```nginx
+    map $host $oidc_landing_page {
+        default "";
+        www.example.com $redirect_base;
+    }
+
     map $host $post_logout_return_uri {
-        default $redirect_base;
+      default "";
+      www.example.com $oidc_landing_page;
     }
     ```
 
