@@ -1,6 +1,7 @@
     # Advanced configuration START
     set $internal_error_message "NGINX / OpenID Connect login failure\n";
     set $pkce_id "";
+    set $session_id "";
     #resolver 8.8.8.8; # For global DNS lookup of IDP endpoint
     resolver 127.0.0.11;           # For local Docker DNS lookup
 
@@ -89,6 +90,13 @@
         proxy_pass       $oidc_userinfo_endpoint;
     }
 
+    location = /_session_cookie_validation {
+        # This location is called by any endpoint to validate a session cookie.
+        internal;
+        status_zone "session cookie validation";
+        js_content oidc.validateSessionCookie;
+    }
+
     location = /logout {
         # RP-Initiated Logout to interact with $oidc_logout_endpoint as per:
         #  https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
@@ -101,7 +109,7 @@
         # $oidc_logout_redirect which is called by OP after successful logout.
 
         # Clean cookies
-        add_header Set-Cookie "auth_token=; $oidc_cookie_flags"; # Send empty cookie
+        add_header Set-Cookie "session_id=; $oidc_cookie_flags"; # Send empty cookie
         add_header Set-Cookie "auth_redir=; $oidc_cookie_flags"; # Erase original cookie
         add_header Set-Cookie "auth_nonce=; $oidc_cookie_flags"; 
 
@@ -121,6 +129,20 @@
         status_zone "OIDC error";
         default_type text/plain;
         return 500 $internal_error_message;
+    }
+
+    location @session_cookie_error {
+        # This location is called when oidc.validateSessionCookie()returns an error.
+        status_zone "OIDC error: session cookie";
+        default_type application/json;
+
+        # Clean cookies
+        add_header Set-Cookie "session_id=; $oidc_cookie_flags"; # Send empty cookie
+        add_header Set-Cookie "auth_redir=; $oidc_cookie_flags"; # Erase original cookie
+        add_header Set-Cookie "auth_nonce=; $oidc_cookie_flags"; 
+
+        set $session_cookie_status '{ "message" : "invalid session cookie" }';
+        return 403 $session_cookie_status;
     }
 
     location /api/ {

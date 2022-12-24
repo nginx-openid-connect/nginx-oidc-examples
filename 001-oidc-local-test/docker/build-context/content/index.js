@@ -101,7 +101,7 @@ var doSignIn = function(evt) {
   eraseCookie('session_id')
   eraseCookie('auth_redir')
   eraseCookie('auth_nonce')
-  
+
   doNginxEndpointRequest(evt, '/login');
 };
 
