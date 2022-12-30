@@ -13,7 +13,6 @@ export default {
     codeExchange,
     validateIdToken,
     logout,
-    redirectPostLogin,
     redirectPostLogout,
     userInfo
 };
@@ -210,7 +209,7 @@ function codeExchange(r) {
                         }
                         
                         r.headersOut["Set-Cookie"] = "auth_token=" + r.variables.request_id + "; " + r.variables.oidc_cookie_flags;
-                        r.return(302, r.variables.redirect_base + r.variables.cookie_auth_redir);
+                        redirectPostLogin(r);
                    }
                 );
             } catch (e) {
@@ -272,6 +271,15 @@ function validateIdToken(r) {
         r.return(204);
     } else {
         r.return(403);
+    }
+}
+
+// Redirect URI after successful login from the OP.
+function redirectPostLogin(r) {
+    if (r.variables.oidc_landing_page) {
+        r.return(302, r.variables.oidc_landing_page);
+    } else {
+        r.return(302, r.variables.redirect_base + r.variables.cookie_auth_redir);
     }
 }
 
@@ -339,17 +347,6 @@ function idpClientAuth(r) {
     } else {
         return "code=" + r.variables.arg_code + "&client_secret=" + r.variables.oidc_client_secret;
     }   
-}
-
-//
-// Redirect URI after successful login from the OP.
-//
-function redirectPostLogin(r) {
-    if (r.variables.oidc_landing_page) {
-        r.return(302, r.variables.oidc_landing_page);
-    } else {
-        r.return(302, r.variables.redirect_base + r.variables.cookie_auth_redir);
-    }
 }
 
 //

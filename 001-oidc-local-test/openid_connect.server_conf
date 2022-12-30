@@ -89,6 +89,17 @@
         proxy_pass       $oidc_userinfo_endpoint;
     }
 
+    location = /login {
+        # This location can be called by SPA for scenarios where `/` location is
+        # proxied to SPA landing page that doesn't need to be started with user
+        # authentication, and a user clicks on login button to start OIDC flow.
+        auth_jwt "" token=$session_jwt;
+        error_page 401 = @do_oidc_flow;
+
+        auth_jwt_key_file $oidc_jwt_keyfile; # Enable when using filename
+        #auth_jwt_key_request /_jwks_uri;    # Enable when using URL
+    }
+
     location = /logout {
         # RP-Initiated Logout to interact with $oidc_logout_endpoint as per:
         #  https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
