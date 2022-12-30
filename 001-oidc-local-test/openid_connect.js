@@ -275,31 +275,27 @@ function validateIdToken(r) {
     }
 }
 
-//
-// Default RP-Initiated or Custom Logout w/ OP.
-// 
-// - An RP requests that the OP log out the end-user by redirecting the
-//   end-user's User Agent to the OP's Logout endpoint.
-// - https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
-// - https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RedirectionAfterLogout
-//
+// Default RP-Initiated or Custom Logout w/ OP as per:
+//  https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RPLogout
+//  https://openid.net/specs/openid-connect-rpinitiated-1_0.html#RedirectionAfterLogout
+// An RP requests that the OP log out the end-user by redirecting the end-user's
+// User Agent to the OP's Logout endpoint.
 function logout(r) {
     r.log("OIDC logout for " + r.variables.cookie_auth_token);
-    var idToken = r.variables.session_jwt;
-    var queryParams = '?post_logout_redirect_uri=' + 
-                      r.variables.redirect_base + 
-                      r.variables.oidc_logout_redirect +
-                      '&id_token_hint=' + idToken;
-    if (r.variables.oidc_logout_query_params_option == REPLACE_PARAMS) {
+    var queryParams = '';
+    if (r.variables.oidc_logout_query_params) {
         queryParams = '?' + r.variables.oidc_logout_query_params;
-    } else if (r.variables.oidc_logout_query_params_option == EXTRA_PARAMS) {
-        queryParams += '&' + r.variables.oidc_logout_query_params;
-    } 
+    }
     r.variables.request_id    = '-';
     r.variables.session_jwt   = '-';
     r.variables.access_token  = '-';
     r.variables.refresh_token = '-';
     r.return(302, r.variables.oidc_logout_endpoint + queryParams);
+}
+
+// Redirect URI after logged-out from the OP.
+function redirectPostLogout(r) {
+    r.return(302, r.variables.oidc_logout_landing_page);
 }
 
 function getQueryParamsAuthZ(r) {
@@ -351,17 +347,6 @@ function idpClientAuth(r) {
 function redirectPostLogin(r) {
     if (r.variables.oidc_landing_page) {
         r.return(302, r.variables.oidc_landing_page);
-    } else {
-        r.return(302, r.variables.redirect_base + r.variables.cookie_auth_redir);
-    }
-}
-
-//
-// Redirect URI after logged-out from the OP.
-//
-function redirectPostLogout(r) {
-    if (r.variables.post_logout_return_uri) {
-        r.return(302, r.variables.post_logout_return_uri);
     } else {
         r.return(302, r.variables.redirect_base + r.variables.cookie_auth_redir);
     }
