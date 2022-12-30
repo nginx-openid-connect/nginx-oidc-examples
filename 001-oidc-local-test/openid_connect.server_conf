@@ -97,23 +97,22 @@
     }
 
     location = /_logout {
-        # This location is a RP's callback URI that is the default value of 
-        # $oidc_logout_redirect which is called by OP after successful logout.
+        # This location is a RP's callback URI which is called by the IdP after
+        # successful logout from the IdP by calling $oidc_logout_endpoint.
 
         # Clean cookies
         add_header Set-Cookie "auth_token=; $oidc_cookie_flags"; # Send empty cookie
         add_header Set-Cookie "auth_redir=; $oidc_cookie_flags"; # Erase original cookie
         add_header Set-Cookie "auth_nonce=; $oidc_cookie_flags"; 
 
-        # Enable one of the following examples.
-
-        # Example 1. Built-in, simple logout page
-        #default_type text/plain;
-        #return 200 "Logged out\n";
-
-        # Example 2. Redirect to either the landing page or custom logout page
-        #            using the map of $post_logout_return_uri.
         js_content oidc.redirectPostLogout;
+    }
+
+    location = /logout_page {
+        # This location is a default value of $oidc_logout_landing_page as a 
+        # Built-in, simple logout page in case it wasn't configured.
+        default_type text/plain;
+        return 200 "Logged out\n";
     }
 
     location @oidc_error {
